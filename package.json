@@ -1,0 +1,16 @@
+{
+  "author": "Ben Buckman <ben@newleafdigital.com> (http://newleafdigital.com/)",
+  "name": "google-ranking",
+  "description": "Fetch the Google search ranking for a phrase",
+  "version": "0.0.1",
+  "repository": {
+    "url": "git@github.com:newleafdigital/nodejs-google-ranking.git"
+  },
+  "main": "google-ranking.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "optionalDependencies": {},
+  "engines": {
+    "node": "*"
+  }
+}
