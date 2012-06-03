@@ -7,7 +7,10 @@
     "url": "git@github.com:newleafdigital/nodejs-google-ranking.git"
   },
   "main": "google-ranking.js",
-  "dependencies": {},
+  "dependencies": {
+    "jscrape": "0.0.4",
+    "async": "~0.1.22"
+  },
   "devDependencies": {},
   "optionalDependencies": {},
   "engines": {
