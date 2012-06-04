@@ -15,11 +15,15 @@
     - [simpler] #nav a#pnnext
 */
 
+var jscrape = require('jscrape'),   // lazy combo of jquery+jsdom+request
+    async = require('async');
 
 var gBase = 'http://www.google.com';    // maybe expand to other languages?
 
+
+
 // returns the search URL for a query and page
-var searchUrl = function(searchPhrase) {
+var searchUrl = function searchUrl(searchPhrase) {
   // spaces=>+, otherwise escape
   searchPhrase = escape( searchPhrase.replace(/ /g, '+') );
   var url = gBase + '/search?hl=en&output=search&q=' + searchPhrase + '&';
@@ -27,81 +31,63 @@ var searchUrl = function(searchPhrase) {
   // if (!isNaN(pageNum) && pageNum > 1) url += 'start=' + (10*pageNum) + '&';
   return url;
 };
+module.exports.searchUrl = searchUrl;
 
-// searchPhrase: string to search for
-// callback gets error or array of results
-var getGoogleResults = function getGoogleResults(searchPhrase, callback) {
 
-  var jscrape = require('jscrape'),   // lazy combo of jquery+jsdom+request
-      async = require('async');
 
+
+// given a search URL (for a single results page), request and parse results
+var getGoogleResultsPage = function getGoogleResultsPage(url, callback) {
   // (default 'Windows NT 6.0' probably looks fishy coming from a Linux server)
   jscrape.headers['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.52 Safari/536.5';
   
-  var results = [],
-      pageNum = 1,
-      url = searchUrl(searchPhrase);
+  // console.log('getting', url);
   
-  
-  // get 10 pages of results. get the next-page url from the results of each.
-  // (could just use start=N param, but seems more authentic to follow actual results link.
-  //  also maybe less likely to raise red flags)
-  async.whilst(
-    function test() { return pageNum <= 10; },
-    
-    function getNextPage(next) {
-      // console.log('page', pageNum, url);
-      
-      jscrape(url, function (error, $, response, body) {
-        if (error) return next(error);
-        if (!$) return next(new Error("Missing jQuery object"));
+  jscrape(url, function (error, $, response, body) {
+    if (error) return next(error);
+    if (!$) return next(new Error("Missing jQuery object"));
 
-        // (highly unlikely)
-        if (response.statusCode !== 200) return next(new Error("Bad status code " + response.statusCode));
+    // (highly unlikely)
+    if (response.statusCode !== 200) return next(new Error("Bad status code " + response.statusCode));
 
-        // add this page's results (in order)
-        $('#search ol li').each(function(){
-          var $vsc = $(this).find('div.vsc');
-          results.push({
-            title: $vsc.find('> h3 > a').text(),
-            url: $vsc.find('> div.s > .f > cite').text(),
-            description: $vsc.find('> div.s > .st').text(),
-            page: pageNum,
-            ranking: results.length
-          });
-        });
-        
-        
-        // parse the Next link
-        var nextPageUrl = $('#nav a#pnnext').attr('href');
-        if (typeof nextPageUrl == 'undefined' || nextPageUrl === null || nextPageUrl === '') {
-          // (maybe the query just doesn't have a lot of results??)
-          return next(new Error("Unable to find next page link in results"));
-        }
-        // should be a relative url
-        else if (/^http/.test(nextPageUrl)) {
-          return next(new Error("Next-page link is not in expected format"));
-        }
-        url = gBase + nextPageUrl;        
+    var results = {
+      nextPageUrl: null,
+      results: []
+    };
 
-        pageNum++;
-        next();
+    // parse results
+    $('#search ol li').each(function(){
+      var $vsc = $(this).find('div.vsc');
+      results.results.push({
+        title: $vsc.find('> h3 > a').text(),
+        url: $vsc.find('> div.s > .f > cite').text(),
+        description: $vsc.find('> div.s > .st').text(),
+        // page: pageNum,
+        ranking: results.results.length + 1
       });
-    },
+    });
     
-    function done(error) {
-      if (error) return callback(error);
-      callback(null, results);
+    // parse the Next link
+    var nextPageUrl = $('#nav a#pnnext').attr('href');
+    if (typeof nextPageUrl == 'undefined' || nextPageUrl === null || nextPageUrl === '') {
+      results.nextPageUrl = null;
     }
-  );
+    // should be a relative url
+    else if (/^http/.test(nextPageUrl)) {
+      return callback(new Error("Next-page link is not in expected format"));
+    }
+    else {
+      results.nextPageUrl = gBase + nextPageUrl;
+    }
 
+    callback(null, results);
+  });
 };
-module.exports.getGoogleResults = getGoogleResults;
-
 
 
 
 // find where in the top 100 results a match is found.
+// (only gets as many as needed, doesn't get 100 if found earlier)
 // urlChecker:
 //  - can be a string, then visible URL is indexOf'd w/ the string. LEAVE OFF http://
 //  - can be a function, gets a result array (w/url, title, description), should return true on match.
@@ -111,25 +97,90 @@ var getGoogleRanking = function getGoogleRanking(searchPhrase, urlChecker, callb
     urlChecker = defaultUrlChecker(urlChecker);
   else if (typeof urlChecker !== 'function')
     throw new Error('urlChecker needs to be a string or a function');
-
-  getGoogleResults(searchPhrase, function(error, results) {
-    if (error) return callback(error);
-    if (typeof results.length === 'undefined') return callback(null, false);
     
-    for (var ranking = 0; ranking < results.length; ranking++) {
-      result = results[ranking];
-      
-      if (urlChecker(result) === true) {
-        callback(null, result);
-        break;
-      }
+  var pageNum = 1,
+    url = searchUrl(searchPhrase),    // initial
+    found = false;
+
+  // get 10 pages of results. get the next-page url from the results of each.
+  // (could just use start=N param, but seems more authentic to follow actual results link.
+  //  also maybe less likely to raise red flags)
+  async.whilst(
+    function test() { return pageNum <= 10 && url != null && !found; },
+
+    function getNextPage(next) {
+      // console.log(pageNum, url);
+
+      getGoogleResultsPage(url, function(error, pageResults){
+        // console.dir(pageResults);
+
+        if (error) return next(error);
+
+        // pageResults have 'nextPageUrl' (string) and results (array)
+        url = pageResults.nextPageUrl || null;
+        
+        for (var i=0; i<pageResults.results.length; i++) {
+          if (urlChecker(pageResults.results[i]) === true) {
+            found = pageResults.results[i];
+            found.page = pageNum;
+            // console.log('Found!', found);
+            return next();  // will stop b/c found is not falsy
+          }
+        }
+        
+        pageNum++;
+        next();
+      });
+    },
+    function done(error) {
+      if (error) return callback(error);
+      callback(null, found);
     }
-    
-    return false; // not found
-  });
+  );
 };
-
 module.exports.getGoogleRanking = getGoogleRanking;
+
+
+
+// get 100 top results for a query
+// searchPhrase: string to search for
+// callback gets error or array of results
+var getGoogleResults = function getGoogleResults(searchPhrase, callback) {
+  
+  var pageNum = 1,
+    url = searchUrl(searchPhrase),
+    results = [];
+
+  // get 10 pages of results. get the next-page url from the results of each.
+  // (could just use start=N param, but seems more authentic to follow actual results link.
+  //  also maybe less likely to raise red flags)
+  async.whilst(
+    function test() { return pageNum <= 10 && url != null; },
+
+    function getNextPage(next) {
+      // console.log(pageNum, url, results.length);
+      
+      getGoogleResultsPage(url, function(error, pageResults){
+        // console.dir(pageResults);
+        
+        if (error) return next(error);
+        
+        // pageResults have 'nextPageUrl' (string) and results (array)
+        url = pageResults.nextPageUrl || null;
+        results = results.concat(pageResults.results);
+        
+        pageNum++;
+        next();
+      });
+    },
+    function done(error) {
+      if (error) return callback(error);
+      callback(null, results);
+    }
+  );
+};
+module.exports.getGoogleResults = getGoogleResults;
+
 
 
 // default urlChecker for a string match. returns a function.

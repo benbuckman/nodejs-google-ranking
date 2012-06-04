@@ -3,6 +3,7 @@
   "name": "google-ranking",
   "description": "Fetch the Google search ranking for a phrase",
   "version": "0.0.1",
+  "homepage": "https://github.com/newleafdigital/nodejs-google-ranking",
   "repository": {
     "url": "git@github.com:newleafdigital/nodejs-google-ranking.git"
   },
