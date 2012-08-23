@@ -1,3 +1,4 @@
+[![build status](https://secure.travis-ci.org/newleafdigital/nodejs-google-ranking.png)](http://travis-ci.org/newleafdigital/nodejs-google-ranking)
 # Node.js module: Google Ranking
 
 A node.js module that fetches Google search results, or the Google search ranking for a phrase.
