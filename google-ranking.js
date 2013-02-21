@@ -89,12 +89,13 @@ var getGoogleResultsPage = function getGoogleResultsPage(url, callback) {
 // find where in the top 100 results a match is found.
 // (only gets as many as needed, doesn't get 100 if found earlier)
 // urlChecker:
-//  - can be a string, then visible URL is indexOf'd w/ the string. LEAVE OFF http://
+//  - can be a string, then visible URL is indexOf'd w/ the string.
 //  - can be a function, gets a result array (w/url, title, description), should return true on match.
 // callback gets [error, result] where result contains page & ranking, or false if not found.
 var getGoogleRanking = function getGoogleRanking(searchPhrase, urlChecker, callback) {
-  if (typeof urlChecker === 'string')
+  if (typeof urlChecker === 'string') {
     urlChecker = defaultUrlChecker(urlChecker);
+  }
   else if (typeof urlChecker !== 'function')
     throw new Error('urlChecker needs to be a string or a function');
     
@@ -185,6 +186,9 @@ module.exports.getGoogleResults = getGoogleResults;
 
 // default urlChecker for a string match. returns a function.
 var defaultUrlChecker = function(url) {
+  // Remove http://
+  url = url.replace('http://', '');
+
   return function(result) {
     if (typeof result.url !== 'undefined')
       if (result.url.indexOf(url) !== -1)
