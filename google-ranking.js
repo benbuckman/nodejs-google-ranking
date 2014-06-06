@@ -186,8 +186,8 @@ module.exports.getGoogleResults = getGoogleResults;
 
 // default urlChecker for a string match. returns a function.
 var defaultUrlChecker = function(url) {
-  // Remove http://
-  url = url.replace('http://', '');
+  // Remove protocol prefix
+  url = url.replace(/^https?:\/\//, '');
 
   return function(result) {
     if (typeof result.url !== 'undefined')
