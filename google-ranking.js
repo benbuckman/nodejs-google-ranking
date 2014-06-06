@@ -50,37 +50,37 @@ var getGoogleResultsPage = function getGoogleResultsPage(url, callback) {
     // (highly unlikely)
     if (response.statusCode !== 200) return next(new Error("Bad status code " + response.statusCode));
 
-    var results = {
+    var res = {
       nextPageUrl: null,
       results: []
     };
 
     // parse results
-    $('#search ol li').each(function(){
-      var $vsc = $(this).find('div.vsc');
-      results.results.push({
-        title: $vsc.find('> h3 > a').text(),
-        url: $vsc.find('> div.s > .f > cite').text(),
-        description: $vsc.find('> div.s > .st').text(),
+    $('#search ol li.g').each(function(){
+      var $rc = $(this).find('div.rc');
+      res.results.push({
+        title: $rc.find('> h3 a').text(),
+        url: $rc.find('> div.s .f cite').text(),
+        description: $rc.find('> div.s .st').text(),
         // page: pageNum,
-        ranking: results.results.length + 1
+        ranking: res.results.length + 1
       });
     });
     
     // parse the Next link
     var nextPageUrl = $('#nav a#pnnext').attr('href');
     if (typeof nextPageUrl == 'undefined' || nextPageUrl === null || nextPageUrl === '') {
-      results.nextPageUrl = null;
+      res.nextPageUrl = null;
     }
     // should be a relative url
     else if (/^http/.test(nextPageUrl)) {
       return callback(new Error("Next-page link is not in expected format"));
     }
     else {
-      results.nextPageUrl = gBase + nextPageUrl;
+      res.nextPageUrl = gBase + nextPageUrl;
     }
 
-    callback(null, results);
+    callback(null, res);
   });
 };
 

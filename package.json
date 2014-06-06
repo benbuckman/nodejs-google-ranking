@@ -2,7 +2,7 @@
   "author": "Ben Buckman <ben@newleafdigital.com> (http://newleafdigital.com/)",
   "name": "google-ranking",
   "description": "Fetch the Google search ranking for a phrase",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "homepage": "https://github.com/benbuckman/nodejs-google-ranking",
   "repository": {
     "type": "git",
