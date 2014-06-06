@@ -2,18 +2,17 @@
   "author": "Ben Buckman <ben@newleafdigital.com> (http://newleafdigital.com/)",
   "name": "google-ranking",
   "description": "Fetch the Google search ranking for a phrase",
-  "version": "0.0.1",
-  "homepage": "https://github.com/newleafdigital/nodejs-google-ranking",
+  "version": "0.0.2",
+  "homepage": "https://github.com/benbuckman/nodejs-google-ranking",
   "repository": {
-    "url": "git@github.com:newleafdigital/nodejs-google-ranking.git"
+    "type": "git",
+    "url": "https://github.com/benbuckman/nodejs-google-ranking.git"
   },
   "main": "google-ranking.js",
   "dependencies": {
     "jscrape": "0.0.4",
     "async": "~0.1.22"
   },
-  "devDependencies": {},
-  "optionalDependencies": {},
   "engines": {
     "node": "*"
   }
