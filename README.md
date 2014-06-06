@@ -22,7 +22,7 @@ Finds where in the top 100 results a match is found.
 (Only gets as many as needed, doesn't get 100 if found earlier)
 
 `urlChecker` can be:
- - a string, then visible URL is indexOf'd w/ the string. (Leave off _http://_)
+ - a string, then visible URL is indexOf'd w/ the string.
  - a function, gets a result array (w/url, title, description), should return true on match.
 
 `callback` gets `error, result where result contains: title, url, description, page, ranking; or false if not found.
